@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flores para ti - TE AMO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-tone: 0;
+      --card-backdrop: rgba(15, 12, 5, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      overflow-y: auto;
+      min-height: 100vh;
+      background-color: #070707;
+      transition: background-color 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    #fireworks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .ambient-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 35%, rgba(255, 235, 59, var(--glow-opacity, 0.05)) 0%, rgba(254, 240, 138, calc(var(--glow-opacity, 0.05) * 0.4)) 55%, transparent 100%);
+      transition: opacity 1.5s ease;
+    }
+
+    .balloon-wrapper {
+      filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35));
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .balloon-wrapper:hover {
+      transform: translateY(-8px) scale(1.08);
+    }
+
+    .balloon-wrapper:active {
+      transform: scale(0.95);
+    }
+
+    .balloon-shape {
+      width: 48px;
+      height: 60px;
+      border-radius: 50% 50% 50% 50% / 42% 42% 58% 58%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .balloon-yellow {
+      background: radial-gradient(circle at 35% 30%, #fff9c4 0%, #fbc02d 58%, #f57f17 100%);
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .balloon-white {
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #eceff1 65%, #cfd8dc 100%);
+      color: #e65100;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+    }
+
+    .balloon-shape::after {
+      content: "";
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 6px solid #b78103;
+    }
+
+    .balloon-white::after {
+      border-bottom-color: #90a4ae;
+    }
+
+    .balloon-string {
+      width: 2px;
+      height: 28px;
+      background: linear-gradient(to bottom, rgba(212, 175, 55, 0.7), rgba(255, 255, 255, 0.1));
+      margin: 0 auto;
+    }
+
+    @keyframes gentleFloat {
+      0% { transform: translateY(0px) rotate(-2deg); }
+      50% { transform: translateY(-12px) rotate(2deg); }
+      100% { transform: translateY(0px) rotate(-2deg); }
+    }
+
+    .floating-1 { animation: gentleFloat 4.2s ease-in-out infinite; }
+    .floating-2 { animation: gentleFloat 3.8s ease-in-out infinite 0.4s; }
+    .floating-3 { animation: gentleFloat 4.6s ease-in-out infinite 0.8s; }
+    .floating-4 { animation: gentleFloat 4.0s ease-in-out infinite 1.2s; }
+    .floating-5 { animation: gentleFloat 4.4s ease-in-out infinite 1.6s; }
+    .floating-6 { animation: gentleFloat 3.9s ease-in-out infinite 2.0s; }
+
+    .title-script {
+      font-family: 'Playfair Display', serif;
+      letter-spacing: 0.5px;
+      transition: color 0.6s ease, text-shadow 0.6s ease;
+    }
+
+    .bouquet-box {
+      animation: heartbeat 3.8s ease-in-out infinite;
+      transform-origin: center bottom;
+      transition: transform 0.3s ease;
+    }
+
+    .bouquet-box:hover {
+      transform: scale(1.05);
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.045) translateY(-4px); }
+    }
+
+    .custom-shadow {
+      filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 35px rgba(250, 204, 21, 0.35));
+    }
+
+    /* Modal emergente */
+    #welcomeModal {
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #welcomeModal.hidden-modal {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col items-center justify-between min-h-screen px-4 py-8 text-neutral-100 transition-colors duration-1000">
+
+  <!-- Música de fondo (Reemplaza el src con tu canción favorita) -->
+  <audio id="bgMusic" loop preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-piano-112199.mp3" type="audio/mp3">
+  </audio>
+
+  <!-- Modal estilo tarjeta de la imagen -->
+  <div id="welcomeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="relative w-full max-w-sm rounded-[32px] p-8 text-center bg-[#0d131f]/95 border border-yellow-500/20 shadow-[0_0_50px_rgba(234,179,8,0.15)] flex flex-col items-center">
+      
+      <!-- Icono de Girasol de la imagen -->
+      <div class="text-5xl mb-4 select-none animate-pulse">
+        🌻
+      </div>
+
+      <!-- Título -->
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-3 tracking-wide">
+        Un regalo especial
+      </h2>
+
+      <!-- Descripción -->
+      <p class="text-sm text-neutral-300 font-normal leading-relaxed mb-6 px-2">
+        Toca el botón para abrir la sorpresa y puedas disfrutarlo con sus fuegos artificiales.
+      </p>
+
+      <!-- Botón Tocar para abrirlo -->
+      <button id="startBtn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#eab308] via-[#f59e0b] to-[#d97706] hover:brightness-110 active:scale-95 text-neutral-900 font-bold text-base shadow-[0_8px_25px_rgba(234,179,8,0.4)] transition-all flex items-center justify-center gap-2">
+        <span>Tocar para abrirlo</span>
+        <span class="text-red-500 text-lg">❤️</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="ambient-overlay" id="ambientGlow"></div>
+  <canvas id="fireworks"></canvas>
+
+  <header class="relative z-10 w-full max-w-md flex items-center justify-between text-xs px-2 py-1 mb-2">
+    <!-- Botón para alternar la música -->
+    <button id="musicToggleBtn" class="bg-black/40 hover:bg-black/60 text-yellow-200/80 hover:text-yellow-100 px-3 py-1.5 rounded-full border border-yellow-500/20 backdrop-blur-md transition-all active:scale-95 flex items-center gap-1.5">
+      <span id="musicIcon">🎵</span> <span id="musicText">Música</span>
+    </button>
+
+    <button id="resetBgBtn" class="bg-black/40 hover:bg-black/60 text-yellow-200/80 hover:text-yellow-100 px-3 py-1.5 rounded-full border border-yellow-500/20 backdrop-blur-md transition-all active:scale-95">
+      Reiniciar fondo
+    </button>
+  </header>
+
+  <main class="relative z-10 flex flex-col items-center justify-center my-auto w-full max-w-md text-center">
+    
+    <div class="flex items-end justify-center gap-2 sm:gap-3 mb-6">
+      <!-- Globo 1: Corazón -->
+      <div class="balloon-wrapper floating-1" onclick="popInteractiveBalloon(event, '💛')">
+        <div class="balloon-shape balloon-yellow text-lg">💛</div>
+        <div class="balloon-string"></div>
+      </div>
+      <!-- Globo 2: L -->
+      <div class="balloon-wrapper floating-2" onclick="popInteractiveBalloon(event, 'L')">
+        <div class="balloon-shape balloon-white text-xl font-extrabold">L</div>
+        <div class="balloon-string"></div>
+      </div>
+      <!-- Globo 3: O -->
+      <div class="balloon-wrapper floating-3" onclick="popInteractiveBalloon(event, 'O')">
+        <div class="balloon-shape balloon-yellow text-xl font-extrabold">O</div>
+        <div class="balloon-string"></div>
+      </div>
+      <!-- Globo 4: V -->
+      <div class="balloon-wrapper floating-4" onclick="popInteractiveBalloon(event, 'V')">
+        <div class="balloon-shape balloon-white text-xl font-extrabold">V</div>
+        <div class="balloon-string"></div>
+      </div>
+      <!-- Globo 5: E -->
+      <div class="balloon-wrapper floating-5" onclick="popInteractiveBalloon(event, 'E')">
+        <div class="balloon-shape balloon-yellow text-xl font-extrabold">E</div>
+        <div class="balloon-string"></div>
+      </div>
+      <!-- Globo 6: Girasol -->
+      <div class="balloon-wrapper floating-6" onclick="popInteractiveBalloon(event, '🌻')">
+        <div class="balloon-shape balloon-white text-lg">🌻</div>
+        <div class="balloon-string"></div>
+      </div>
+    </div>
+
+    <div class="space-y-1 mb-6 px-4">
+      <div class="flex items-center justify-center gap-2">
+        <span class="text-xl animate-bounce">🌻</span>
+        <h2 id="subtitle" class="title-script text-2xl sm:text-3xl font-bold text-amber-300 drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]">
+          Flores para ti
+        </h2>
+        <span class="text-xl animate-bounce" style="animation-delay: 0.2s">✨</span>
+      </div>
+
+      <h1 id="mainTitle" class="text-4xl sm:text-5xl md:text-6xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-yellow-400 drop-shadow-[0_4px_16px_rgba(234,179,8,0.7)]">
+        TE AMO
+      </h1>
+
+      <p id="subHint" class="text-xs sm:text-sm font-medium text-amber-200/80 transition-colors pt-1">
+        Haz clic en cualquier parte para lanzar fuegos artificiales
+      </p>
+    </div>
+
+    <div class="relative bouquet-box cursor-pointer flex flex-col items-center" id="sunflowerTrigger" title="¡Tócame para flores y destellos!">
+      <!-- Ramo SVG detallado -->
+      <svg class="w-64 sm:w-72 h-auto custom-shadow transition-transform duration-300" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="sunPetalGrad" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#fff59d" />
+            <stop offset="45%" stop-color="#fdd835" />
+            <stop offset="85%" stop-color="#f57f17" />
+            <stop offset="100%" stop-color="#e65100" />
+          </radialGradient>
+          <radialGradient id="seedCenter" cx="40%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#5d4037" />
+            <stop offset="70%" stop-color="#3e2723" />
+            <stop offset="100%" stop-color="#271309" />
+          </radialGradient>
+          <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4caf50" />
+            <stop offset="100%" stop-color="#1b5e20" />
+          </linearGradient>
+          <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="50%">
+            <stop offset="0%" stop-color="#ffe082" />
+            <stop offset="50%" stop-color="#ffb300" />
+            <stop offset="100%" stop-color="#ff8f00" />
+          </linearGradient>
+        </defs>
+
+        <g id="stemsAndLeaves">
+          <path d="M190 280 L170 390" stroke="#2e7d32" stroke-width="12" stroke-linecap="round" />
+          <path d="M200 280 L200 400" stroke="#388e3c" stroke-width="14" stroke-linecap="round" />
+          <path d="M210 280 L230 390" stroke="#1b5e20" stroke-width="12" stroke-linecap="round" />
+          
+          <path d="M150 250 C110 230 100 290 140 290 Z" fill="url(#leafGrad)" opacity="0.95" />
+          <path d="M250 250 C290 230 300 290 260 290 Z" fill="url(#leafGrad)" opacity="0.95" />
+          <path d="M130 190 C80 170 80 230 130 220 Z" fill="url(#leafGrad)" />
+          <path d="M270 190 C320 170 320 230 270 220 Z" fill="url(#leafGrad)" />
+        </g>
+
+        <!-- Girasol lateral izquierdo -->
+        <g transform="translate(135, 175) scale(0.68)">
+          <g>
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(0)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(30)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(60)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(90)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(120)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(150)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(180)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(210)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(240)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(270)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(300)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(330)" />
+          </g>
+          <circle cx="0" cy="0" r="32" fill="url(#seedCenter)" stroke="#e65100" stroke-width="2" />
+        </g>
+
+        <!-- Girasol lateral derecho -->
+        <g transform="translate(265, 175) scale(0.68)">
+          <g>
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(15)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(45)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(75)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(105)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(135)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(165)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(195)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(225)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(255)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(285)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(315)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(345)" />
+          </g>
+          <circle cx="0" cy="0" r="32" fill="url(#seedCenter)" stroke="#e65100" stroke-width="2" />
+        </g>
+
+        <!-- Girasol superior central -->
+        <g transform="translate(200, 125) scale(0.72)">
+          <g>
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(0)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(30)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(60)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(90)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(120)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(150)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(180)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(210)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(240)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(270)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(300)" />
+            <ellipse cx="0" cy="-60" rx="14" ry="40" fill="url(#sunPetalGrad)" transform="rotate(330)" />
+          </g>
+          <circle cx="0" cy="0" r="34" fill="url(#seedCenter)" stroke="#e65100" stroke-width="2" />
+        </g>
+
+        <!-- Girasol Principal Grande -->
+        <g transform="translate(200, 205) scale(0.95)">
+          <g>
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(0)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(22.5)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(45)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(67.5)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(90)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(112.5)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(135)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(157.5)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(180)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(202.5)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(225)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(247.5)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(270)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(292.5)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(315)" />
+            <ellipse cx="0" cy="-68" rx="17" ry="46" fill="url(#sunPetalGrad)" transform="rotate(337.5)" />
+          </g>
+          <circle cx="0" cy="0" r="42" fill="url(#seedCenter)" stroke="#d84315" stroke-width="3" />
+          <circle cx="0" cy="0" r="30" fill="none" stroke="#fbc02d" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.6" />
+          <circle cx="0" cy="0" r="18" fill="none" stroke="#ffe082" stroke-width="1" stroke-dasharray="2,2" opacity="0.7" />
+        </g>
+
+        <!-- Lazo dorado del ramo -->
+        <g id="bouquetRibbon" transform="translate(200, 310)">
+          <path d="M-10 10 Q -30 60 -45 90 Q -25 70 -5 20 Z" fill="url(#ribbonGrad)" />
+          <path d="M10 10 Q 30 60 45 90 Q 25 70 5 20 Z" fill="url(#ribbonGrad)" />
+          <path d="M0 0 C -40 -35 -50 15 0 8 Z" fill="url(#ribbonGrad)" stroke="#ff8f00" stroke-width="1.5" />
+          <path d="M0 0 C 40 -35 50 15 0 8 Z" fill="url(#ribbonGrad)" stroke="#ff8f00" stroke-width="1.5" />
+          <circle cx="0" cy="4" r="8" fill="#ffe082" stroke="#e65100" stroke-width="1.5" />
+        </g>
+      </svg>
+    </div>
+  </main>
+
+  <footer class="relative z-10 w-full max-w-sm text-center mt-4">
+    <div id="statusMessage" class="bg-black/40 backdrop-blur-md rounded-2xl p-3 border border-yellow-500/20 text-xs sm:text-sm text-amber-200 transition-all duration-700">
+      "Eres mi flor amarilla más hermosa."
+    </div>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    const ambientGlow = document.getElementById('ambientGlow');
+    const subtitle = document.getElementById('subtitle');
+    const mainTitle = document.getElementById('mainTitle');
+    const subHint = document.getElementById('subHint');
+    const statusMsg = document.getElementById('statusMessage');
+    const resetBtn = document.getElementById('resetBgBtn');
+    const sunflowerTrigger = document.getElementById('sunflowerTrigger');
+
+    // Elementos del Modal y Música
+    const welcomeModal = document.getElementById('welcomeModal');
+    const startBtn = document.getElementById('startBtn');
+    const bgMusic = document.getElementById('bgMusic');
+    const musicToggleBtn = document.getElementById('musicToggleBtn');
+    const musicIcon = document.getElementById('musicIcon');
+    const musicText = document.getElementById('musicText');
+
+    let isPlayingMusic = false;
+
+    // Manejo de Inicio desde el Modal
+    startBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      welcomeModal.classList.add('hidden-modal');
+      
+      // Intentar reproducir música
+      bgMusic.play().then(() => {
+        isPlayingMusic = true;
+        musicIcon.textContent = '🔊';
+        musicText.textContent = 'Sonando';
+      }).catch((err) => {
+        console.log("Audio esperando interacción adicional:", err);
+      });
+
+      // Lanzar fuegos artificiales de celebración al abrir
+      for(let i = 0; i < 3; i++) {
+        setTimeout(() => autoLaunch(), i * 300);
+      }
+    });
+
+    // Control de reproducción / pausa de música
+    musicToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bgMusic.paused) {
+        bgMusic.play();
+        isPlayingMusic = true;
+        musicIcon.textContent = '🔊';
+        musicText.textContent = 'Sonando';
+      } else {
+        bgMusic.pause();
+        isPlayingMusic = false;
+        musicIcon.textContent = '🔇';
+        musicText.textContent = 'Pausada';
+      }
+    });
+
+    // Manejo responsivo del canvas
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const sparkleColors = ['#fff59d', '#ffea00', '#ffd700', '#ffb300', '#ffffff', '#ffe082'];
+    let explosionCount = 0;
+    const maxExplosionsToMaxPale = 20;
+
+    function lerpColor(r1, g1, b1, r2, g2, b2, t) {
+      const r = Math.round(r1 + (r2 - r1) * t);
+      const g = Math.round(g1 + (g2 - g1) * t);
+      const b = Math.round(b1 + (b2 - b1) * t);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function updateBackgroundProgress() {
+      const ratio = Math.min(explosionCount / maxExplosionsToMaxPale, 1.0);
+      const targetBg = lerpColor(7, 7, 7, 253, 246, 216, ratio);
+      document.body.style.backgroundColor = targetBg;
+      ambientGlow.style.setProperty('--glow-opacity', (0.05 + ratio * 0.35).toFixed(3));
+
+      if (ratio > 0.45) {
+        subtitle.style.color = '#78350f';
+        subtitle.style.textShadow = '0 2px 8px rgba(251, 191, 36, 0.4)';
+        mainTitle.style.backgroundImage = 'linear-gradient(to right, #92400e, #b45309, #78350f)';
+        mainTitle.style.filter = 'drop-shadow(0 2px 10px rgba(180, 83, 9, 0.35))';
+        subHint.style.color = '#92400e';
+        statusMsg.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+        statusMsg.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        statusMsg.style.color = '#78350f';
+      } else {
+        subtitle.style.color = '#fcd34d';
+        subtitle.style.textShadow = '0 2px 10px rgba(251, 191, 36, 0.5)';
+        mainTitle.style.backgroundImage = 'linear-gradient(to right, #fde68a, #fef08a, #facc15)';
+        mainTitle.style.filter = 'drop-shadow(0 4px 16px rgba(234, 179, 8, 0.7))';
+        subHint.style.color = 'rgba(254, 240, 138, 0.8)';
+        statusMsg.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+        statusMsg.style.borderColor = 'rgba(234, 179, 8, 0.2)';
+        statusMsg.style.color = '#fde68a';
+      }
+    }
+
+    let particles = [];
+    let flashes = [];
+
+    class GlowFlash {
+      constructor(x, y, power = 1) {
+        this.x = x;
+        this.y = y;
+        this.radius = 160 * power;
+        this.alpha = 0.28 * power;
+        this.decay = 0.005;
+      }
+
+      update() {
+        this.alpha -= this.decay;
+      }
+
+      draw() {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        const radGrad = ctx.createRadialGradient(
+          this.x, this.y, 4,
+          this.x, this.y, this.radius
+        );
+        radGrad.addColorStop(0, `rgba(255, 245, 157, ${Math.max(this.alpha, 0)})`);
+        radGrad.addColorStop(0.35, `rgba(253, 216, 53, ${Math.max(this.alpha * 0.65, 0)})`);
+        radGrad.addColorStop(0.7, `rgba(245, 127, 23, ${Math.max(this.alpha * 0.25, 0)})`);
+        radGrad.addColorStop(1, 'rgba(255, 235, 59, 0)');
+
+        ctx.fillStyle = radGrad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    class SparkParticle {
+      constructor(x, y, speedMult = 1) {
+        this.x = x;
+        this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = (Math.random() * 4.2 + 1.2) * speedMult;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.014 + 0.007;
+        this.color = sparkleColors[Math.floor(Math.random() * sparkleColors.length)];
+        this.radius = Math.random() * 2.2 + 1;
+        this.friction = 0.985;
+      }
+
+      update() {
+        this.vx *= this.friction;
+        this.vy *= this.friction;
+        this.vy += 0.035;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decay;
+      }
+
+      draw() {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(this.alpha, 0);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = '#fbc02d';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    const messages = [
+      "Eres mi luz en todo momento 💛",
+      "Cada flor amarilla piensa en ti ✨",
+      "¡Te amo con todo mi corazón! 🌻",
+      "Iluminas mi vida cada día ☀️",
+      "Flores amarillas eternas para ti 💛"
+    ];
+
+    function createFirework(x, y, count = 48, power = 1) {
+      flashes.push(new GlowFlash(x, y, power));
+
+      for (let i = 0; i < count; i++) {
+        particles.push(new SparkParticle(x, y, power));
+      }
+
+      explosionCount++;
+      updateBackgroundProgress();
+
+      if (explosionCount % 3 === 0) {
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        statusMsg.textContent = `"${randomMsg}"`;
+      }
+    }
+
+    function autoLaunch() {
+      const x = Math.random() * (canvas.width * 0.8) + canvas.width * 0.1;
+      const y = Math.random() * (canvas.height * 0.45) + canvas.height * 0.08;
+      createFirework(x, y, 42, 1);
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('#resetBgBtn') || e.target.closest('#welcomeModal') || e.target.closest('#musicToggleBtn')) return;
+      createFirework(e.clientX, e.clientY, 54, 1.15);
+    });
+
+    function popInteractiveBalloon(event, symbol) {
+      event.stopPropagation();
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      createFirework(x, y, 60, 1.25);
+
+      const el = event.currentTarget;
+      el.style.transform = 'scale(1.25) translateY(-12px)';
+      setTimeout(() => {
+        el.style.transform = '';
+      }, 350);
+    }
+
+    sunflowerTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const rect = sunflowerTrigger.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      createFirework(centerX, centerY - 60, 45, 1);
+      setTimeout(() => createFirework(centerX - 80, centerY - 20, 35, 0.9), 120);
+      setTimeout(() => createFirework(centerX + 80, centerY - 20, 35, 0.9), 240);
+    });
+
+    resetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      explosionCount = 0;
+      updateBackgroundProgress();
+      statusMsg.textContent = '"El cielo se ha vuelto a llenar de estrellas. ¡Toca la pantalla para iluminarlo de nuevo!"';
+    });
+
+    function renderLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      flashes = flashes.filter(f => f.alpha > 0);
+      for (let i = 0; i < flashes.length; i++) {
+        flashes[i].update();
+        flashes[i].draw();
+      }
+
+      particles = particles.filter(p => p.alpha > 0);
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+      }
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    renderLoop();
+    let fireworkInterval = setInterval(autoLaunch, 1600);
+    updateBackgroundProgress();
+  </script>
+</body>
+</html>
